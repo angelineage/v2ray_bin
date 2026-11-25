@@ -118,6 +118,8 @@ function getAllConfigs() {
 		obj.v2ray_headtype_tcp = db_ss[p + "_v2ray_headtype_tcp_" + field] || "";
 		obj.v2ray_headtype_kcp = db_ss[p + "_v2ray_headtype_kcp_" + field] || "";
 		obj.v2ray_serviceName = db_ss[p + "_v2ray_serviceName_" + field] || "";
+		obj.v2ray_xhttp_mode = db_ss[p + "_v2ray_xhttp_mode_" + field] || "auto";
+		obj.v2ray_xhttp_extra = db_ss[p + "_v2ray_xhttp_extra_" + field] || "{}";
 
 		obj.allowinsecure = db_ss[p + "_allowinsecure_" + field] || "0";
 		obj.fingerprint = db_ss[p + "_fingerprint_" + field] || "";
@@ -287,6 +289,15 @@ function buildOutboundsFromSelection(selectedIds){
 			} else if (ob.streamSettings.network === "kcp") {
 				ob.streamSettings.kcpSettings = { header: { type: (c.v2ray_headtype_kcp || "none") } };
 				if (c.v2ray_network_path) ob.streamSettings.kcpSettings.seed = c.v2ray_network_path;
+			} else if (ob.streamSettings.network === "xhttp") {
+				var xhttpExtra = {};
+				try { xhttpExtra = JSON.parse(c.v2ray_xhttp_extra || "{}"); } catch (e) { xhttpExtra = {}; }
+				ob.streamSettings.xhttpSettings = {
+					path: c.v2ray_network_path || "/",
+					mode: c.v2ray_xhttp_mode || "auto"
+				};
+				if (c.v2ray_network_host) ob.streamSettings.xhttpSettings.host = c.v2ray_network_host;
+				if (xhttpExtra && Object.keys(xhttpExtra).length) ob.streamSettings.xhttpSettings.extra = xhttpExtra;
 			}
 
 			outbounds.push(ob);

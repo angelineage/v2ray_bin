@@ -360,11 +360,12 @@ create_v2ray_json(){
 	local tls="null"
 	local reality="null"
 	local vless_flow=""
+	local xhttp="null"
 
 	# tcp和kcp下tlsSettings为null，ws和h2下tlsSettings
 	[ "$(eval echo \$ssconf_basic_v2ray_network_security_$nu)" = "none" ] && local ssconf_basic_v2ray_network_security=""
 
-	if [ "$(eval echo \$ssconf_basic_v2ray_network_$nu)" = "ws" -o "$(eval echo \$ssconf_basic_v2ray_network_$nu)" = "h2" ] && \
+	if [ "$(eval echo \$ssconf_basic_v2ray_network_$nu)" = "ws" -o "$(eval echo \$ssconf_basic_v2ray_network_$nu)" = "h2" -o "$(eval echo \$ssconf_basic_v2ray_network_$nu)" = "xhttp" ] && \
 	   [ -z "$(eval echo \$ssconf_basic_v2ray_network_tlshost_$nu)" ] && \
 	   [ -n "$(eval echo \$ssconf_basic_v2ray_network_host_$nu)" ]; then
 		local ssconf_basic_v2ray_network_tlshost_$nu="$(eval echo \$ssconf_basic_v2ray_network_host_$nu)"
@@ -491,6 +492,22 @@ create_v2ray_json(){
 			\"serviceName\": $(get_path $local_serviceName)
 		}"
 		;;
+	xhttp)
+		local xhttp_path=$(eval echo \$ssconf_basic_v2ray_network_path_$nu)
+		[ -z "$xhttp_path" ] && xhttp_path="/"
+		local xhttp_host=$(eval echo \$ssconf_basic_v2ray_network_host_$nu)
+		local xhttp_mode=$(eval echo \$ssconf_basic_v2ray_xhttp_mode_$nu)
+		[ -z "$xhttp_mode" ] && xhttp_mode="auto"
+		local xhttp_extra=$(eval echo \$ssconf_basic_v2ray_xhttp_extra_$nu)
+		[ -z "$xhttp_extra" ] && xhttp_extra='{}'
+		printf '%s' "$xhttp_extra" | /koolshare/bin/jq -e . >/dev/null 2>&1 || xhttp_extra='{}'
+		local xhttp=$(/koolshare/bin/jq -cn --arg p "$xhttp_path" --arg h "$xhttp_host" --arg m "$xhttp_mode" --argjson e "$xhttp_extra" '
+			if ($p | length) == 0 then error("xhttp path is required") else
+			  {path: $p, mode: $m}
+			  + (if ($h | split(",")[0] | length) > 0 then {host: ($h | split(",")[0])} else {} end)
+			  + (if ($e | length) > 0 then {extra: $e} else {} end)
+			end')
+		;;
 	esac
 
 	# log area
@@ -552,7 +569,8 @@ create_v2ray_json(){
 					"kcpSettings": $kcp,
 					"wsSettings": $ws,
 					"httpSettings": $h2,
-					"grpcSettings": $grpc
+					"grpcSettings": $grpc,
+					"xhttpSettings": $xhttp
 				},
 				"mux": {
 					"enabled": $(get_function_switch $(eval echo \$ssconf_basic_v2ray_mux_enable_$nu)),
@@ -595,7 +613,8 @@ create_v2ray_json(){
 					"kcpSettings": $kcp,
 					"wsSettings": $ws,
 					"httpSettings": $h2,
-					"grpcSettings": $grpc
+					"grpcSettings": $grpc,
+					"xhttpSettings": $xhttp
 				},
 				"mux": {
 					"enabled": $(get_function_switch $(eval echo \$ssconf_basic_v2ray_mux_enable_$nu)),

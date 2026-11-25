@@ -14,6 +14,10 @@ CONFIG_FILE=/koolshare/ss/ss.json
 DEL_SUBSCRIBE=0
 SOCKS_FLAG=0
 
+url_decode(){
+	printf '%b' "$(printf '%s' "$1" | tr '+' ' ' | sed 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')"
+}
+
 # ==============================
 # ssconf_basic_webtest_
 # ssconf_basic_node_
@@ -174,6 +178,8 @@ prepare(){
 		[ -n "$(dbus get ssconf_basic_v2ray_protocol_$nu)" ] && echo dbus set ssconf_basic_v2ray_protocol_$q=$(dbus get ssconf_basic_v2ray_protocol_$nu) >> /tmp/ss_conf.sh
 		[ -n "$(dbus get ssconf_basic_v2ray_network_tlshost_$nu)" ] && echo dbus set ssconf_basic_v2ray_network_tlshost_$q=$(dbus get ssconf_basic_v2ray_network_tlshost_$nu)  >> /tmp/ss_conf.sh	
 		[ -n "$(dbus get ssconf_basic_v2ray_network_flow_$nu)" ] && echo dbus set ssconf_basic_v2ray_network_flow_$q=$(dbus get ssconf_basic_v2ray_network_flow_$nu)  >> /tmp/ss_conf.sh	
+		[ -n "$(dbus get ssconf_basic_v2ray_xhttp_mode_$nu)" ] && echo "dbus set ssconf_basic_v2ray_xhttp_mode_$q=\"$(dbus get ssconf_basic_v2ray_xhttp_mode_$nu)\"" >> /tmp/ss_conf.sh
+		[ -n "$(dbus get ssconf_basic_v2ray_xhttp_extra_$nu)" ] && echo "dbus set ssconf_basic_v2ray_xhttp_extra_$q=\"$(dbus get ssconf_basic_v2ray_xhttp_extra_$nu)\"" >> /tmp/ss_conf.sh
 		[ -n "$(dbus get ssconf_basic_fingerprint_$nu)" ] && echo dbus set ssconf_basic_fingerprint_$q=$(dbus get ssconf_basic_fingerprint_$nu)  >> /tmp/ss_conf.sh			
 		[ -n "$(dbus get ssconf_basic_naive_protocol_$nu)" ] && echo dbus set ssconf_basic_naive_protocol_$q=$(dbus get ssconf_basic_naive_protocol_$nu)  >> /tmp/ss_conf.sh	
 		[ -n "$(dbus get ssconf_basic_naive_user_$nu)" ] && echo dbus set ssconf_basic_naive_user_$q=$(dbus get ssconf_basic_naive_user_$nu)  >> /tmp/ss_conf.sh
@@ -720,10 +726,12 @@ update_vmess_config(){
 			dbus_update_if_diff "ssconf_basic_v2ray_headtype_kcp_$index" "$v2ray_type" && i=$((i+1))
 			dbus_update_if_diff "ssconf_basic_v2ray_network_path_$index" "$v2ray_path" && i=$((i+1))
 			;;
-		ws|h2)
-			# ws/h2协议
+		ws|h2|xhttp)
+			# ws/h2/xhttp协议
 			dbus_update_if_diff "ssconf_basic_v2ray_network_host_$index" "$v2ray_host" && i=$((i+1))
 			dbus_update_if_diff "ssconf_basic_v2ray_network_path_$index" "$v2ray_path" && i=$((i+1))
+			dbus_update_if_diff "ssconf_basic_v2ray_xhttp_mode_$index" "$v2ray_xhttp_mode" && i=$((i+1))
+			dbus_update_if_diff "ssconf_basic_v2ray_xhttp_extra_$index" "$v2ray_xhttp_extra" && i=$((i+1))
 			;;
 		grpc)
 			# grpc协议：这里你用 v2ray_path 作为 serviceName
@@ -1083,6 +1091,8 @@ get_vless_config(){
 	fingerprint=$(echo "$decode_link" | tr '?&#' '\n' | grep 'fp=' | awk -F'=' '{print $2}')
 	xray_publicKey=$(echo "$decode_link" | tr '?&#' '\n' | grep 'pbk=' | awk -F'=' '{print $2}')
 	xray_shortId=$(echo "$decode_link" | tr '?&#' '\n' | grep 'sid=' | awk -F'=' '{print $2}')
+	v2ray_xhttp_mode=$(echo "$decode_link" | tr '?&#' '\n' | grep '^mode=' | sed 's/^mode=//')
+	v2ray_xhttp_extra=$(echo "$decode_link" | tr '?&#' '\n' | grep '^extra=' | sed 's/^extra=//' | url_decode)
 	#把全部服务器节点编码后写入文件 /usr/share/shadowsocks/serverconfig/all_onlineservers
 	[ -n "$vless_group" ] && group_base64=`echo $vless_group | base64_encode | sed 's/ -//g'`
 	[ -n "$v2ray_add" ] && server_base64=`echo $v2ray_add | base64_encode | sed 's/ -//g'`	
@@ -1167,11 +1177,12 @@ add_vless_servers(){
 		# grpc协议设置【 grpc伪装类型 (type)】
 		[ -n "$v2ray_serviceName" ] && dbus set ssconf_basic_v2ray_serviceName_$v2rayindex=$v2ray_serviceName
 		;;
-	ws|h2)
-		# ws/h2协议设置【 伪装域名 (host))】和【路径 (path)】
-		# ws + tls + CDN 会比较多，别的组合不熟悉
-		[ -n "$v2ray_host" ] && dbus set ssconf_basic_v2ray_network_host_$v2rayindex=$v2ray_host
-		[ -n "$v2ray_path" ] && dbus set ssconf_basic_v2ray_network_path_$v2rayindex=$v2ray_path
+	ws|h2|xhttp)
+		# ws/h2/xhttp协议设置【 伪装域名 (host)】、【路径 (path)】和 XHTTP 模式/extra
+		[ -n "$v2ray_host" ] && dbus set ssconf_basic_v2ray_network_host_$v2rayindex="$v2ray_host"
+		[ -n "$v2ray_path" ] && dbus set ssconf_basic_v2ray_network_path_$v2rayindex="$v2ray_path"
+		[ -n "$v2ray_xhttp_mode" ] && dbus set ssconf_basic_v2ray_xhttp_mode_$v2rayindex="$v2ray_xhttp_mode"
+		[ -n "$v2ray_xhttp_extra" ] && dbus set ssconf_basic_v2ray_xhttp_extra_$v2rayindex="$v2ray_xhttp_extra"
 		;;
 	esac
 	echo_date vless节点：新增加 【$v2ray_ps】 到节点列表第 $v2rayindex_x 位。
@@ -1220,10 +1231,12 @@ update_vless_config(){
 			# grpc协议
 			dbus_update_if_diff "ssconf_basic_v2ray_serviceName_$index" "$v2ray_serviceName" && i=$((i+1))
 			;;
-		ws|h2)
-			# ws/h2协议
+		ws|h2|xhttp)
+			# ws/h2/xhttp协议
 			dbus_update_if_diff "ssconf_basic_v2ray_network_host_$index" "$v2ray_host" && i=$((i+1))
 			dbus_update_if_diff "ssconf_basic_v2ray_network_path_$index" "$v2ray_path" && i=$((i+1))
+			dbus_update_if_diff "ssconf_basic_v2ray_xhttp_mode_$index" "$v2ray_xhttp_mode" && i=$((i+1))
+			dbus_update_if_diff "ssconf_basic_v2ray_xhttp_extra_$index" "$v2ray_xhttp_extra" && i=$((i+1))
 			;;
 		esac
 
