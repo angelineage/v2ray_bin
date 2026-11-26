@@ -157,8 +157,8 @@ function pop_help() {
 			moveType: 1,
 			content: '<div style="padding: 50px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">\
 				<b>梅林固件 - 科学上网插件 - ' + db_ss["ss_basic_version_local"] + '</b><br><br>\
-				<color style="color: red;">重要提示:此插件向后维护 xray/trojan/naiveproxy/hysteria2/anytls 等功能更新，版本更新。</color><br><br>\
-				<a target="_blank" href="https://github.com/cary-sas/v2ray_bin"><u>本插件</u></a>是支持<a target="_blank" href="https://github.com/shadowsocks/shadowsocks-libev"><u>SS</u></a>、<a target="_blank" href="https://github.com/shadowsocksrr/shadowsocksr-libev"><u>SSR</u></a>、<a target="_blank" href="http://firmware.koolshare.cn/binary/koolgame"><u>KoolGame</u></a>、<a target="_blank" href="https://github.com/XTLS/Xray-core"><u>V2Ray</u></a>、<a target="_blank" href="https://github.com/XTLS/Xray-core"><u>Xray (VLESS、Trojan)</u></a>、<a target="_blank" href="https://github.com/gfw-report/trojan-go"><u>Trojan-Go</u></a>、<a target="_blank" href="https://github.com/klzgrad/naiveproxy/"><u>NaiveProxy</u></a>、<a target="_blank" href="https://github.com/apernet/hysteria/"><u>Hysteria2</u></a>、<a target="_blank" href="https://github.com/anytls/anytls-go"><u>AnyTLS</u></a> 十种客户端的科学上网、游戏加速工具。<br>				本插件仅支持Merlin AM380 2.6.36.4内核的固件，请不要用于其它固件安装。<br>\
+				<color style="color: red;">重要提示：本版本为 Xray-only 精简版，仅保留 Xray 内核；SS/SSR/KoolGame/NaiveProxy/Hysteria2/AnyTLS 已移除，在线更新与历史回滚已停用。</color><br><br>\
+				<a target="_blank" href="https://github.com/angelineage/v2ray_bin"><u>本插件</u></a>是基于 <a target="_blank" href="https://github.com/XTLS/Xray-core"><u>Xray 内核</u></a> 的精简版科学上网工具，支持 VLESS / VMess / Trojan / Trojan-Go / SS2022，含 XHTTP、Reality、本地聚合与完整 DNS 分流。<br>				本插件仅支持Merlin AM380 2.6.36.4内核的固件，请不要用于其它固件安装。<br>\
 				● 服务器一键搭建脚本：<a style="color:#e7bd16" target="_blank" href="https://github.com/cary-sas/v2ray_bin/wiki"><u> 搭建和优化详细教程</u></a><br>\
 				● 插件安装包下载地址：下载最新版的<a style="color:#e7bd16" target="_blank" href="https://github.com/cary-sas/v2ray_bin/releases"><u> shadowsocks.tar.gz </u></a>安装包, 保存下来的文件名不要有空格<br><br>\
 				我们的征途是星辰大海 ^_^</div>'
@@ -3736,12 +3736,12 @@ function set_cron(action) {
 											<img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img>
 										</div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-										<div class="SimpleNote" id="head_illustrate"><a target="_blank" href="https://github.com/cary-sas/v2ray_bin" ><em><u>本插件</u></em></a>是支持<a href="https://github.com/shadowsocks/shadowsocks-libev" target="_blank"><em><u>SS</u></em></a>, <a href="https://github.com/shadowsocksrr/shadowsocksr-libev" target="_blank"><em><u>SSR</u></em></a>, <a href="http://firmware.koolshare.cn/binary/koolgame/" target="_blank"><em><u>KoolGame</u></em></a>, <a target="_blank" href="https://github.com/XTLS/Xray-core"><em><u>Xray (Vmess, Vless, Trojan)</u></em></a>, <a target="_blank" href="https://github.com/gfw-report/trojan-go"><em><u>Trojan-Go</u></em></a>, <a target="_blank" href="https://github.com/klzgrad/naiveproxy/"><em><u>NaiveProxy</u></em></a>, <a target="_blank" href="https://github.com/apernet/hysteria/"><em><u>Hysteria2</u></em></a>, <a target="_blank" href="https://github.com/anytls/anytls-go"><em><u>AnyTLS</u></em></a> 的科学上网, 游戏加速工具。</div>
+										<div class="SimpleNote" id="head_illustrate"><a target="_blank" href="https://github.com/angelineage/v2ray_bin" ><em><u>本插件</u></em></a>是基于 <a target="_blank" href="https://github.com/XTLS/Xray-core"><em><u>Xray 内核</u></em></a> 的精简版科学上网工具，支持 VLESS / VMess / Trojan / Trojan-Go / SS2022，含 XHTTP、Reality 与本地聚合。</div>
 										<div style="margin-top: 0px;text-align: center;font-size: 18px;margin-bottom: 0px;" class="formfontdesc" id="cmdDesc"></div>
 										<!-- this is the popup area for status -->
 										<div id="detail_status"  class="content_status" style="box-shadow: 3px 3px 10px #000;margin-top: 0px;display: none;">
 											<div class="user_title">【科学上网】状态检测</div>
-											<div style="margin-left:15px"><i>&nbsp;&nbsp;目前本功能支持ss相关进程状态和iptables表状态检测。</i></div>
+											<div style="margin-left:15px"><i>&nbsp;&nbsp;目前本功能支持 Xray 进程状态、DNS 状态和 iptables 表状态检测。</i></div>
 											<div id="user_tr" style="margin: 10px 10px 10px 10px;width:98%;text-align:center;overflow:hidden">
 												<textarea cols="63" rows="36" wrap="off" id="proc_status" style="width:98%;padding-left:13px;padding-right:33px;border:0px solid #222;font-family:'Lucida Console'; font-size:11px;background: transparent;color:#FFFFFF;outline: none;overflow-x:hidden;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 											</div>

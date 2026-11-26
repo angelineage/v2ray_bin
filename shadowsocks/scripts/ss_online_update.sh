@@ -10,7 +10,6 @@ source $KSROOT/scripts/base.sh
 alias echo_date='echo 【$(TZ=UTC-8 date -R +%Y年%m月%d日\ %X)】:'
 eval `dbus export ss`
 LOCK_FILE=/tmp/online_update.lock
-CONFIG_FILE=/koolshare/ss/ss.json
 DEL_SUBSCRIBE=0
 SOCKS_FLAG=0
 
@@ -969,23 +968,13 @@ remove_node_gap(){
 }
 
 open_socks_23456(){
-	socksopen_a=`netstat -nlp|grep -w 23456|grep -E "local|v2ray"`
+	# Xray-only: 23456 socks inbound 由 Xray 配置提供，检查是否已监听
+	socksopen_a=`netstat -nlp 2>/dev/null | grep -w 23456 | grep -E "xray|local"`
 	if [ -z "$socksopen_a" ];then
-		if [ "$ss_basic_type" == "1" ];then
-			SOCKS_FLAG=1
-			echo_date 开启ssr-local，提供socks5代理端口：23456
-			rss-local -l 23456 -c $CONFIG_FILE -u -f /var/run/sslocal1.pid >/dev/null 2>&1
-		elif  [ "$ss_basic_type" == "0" ];then
-			SOCKS_FLAG=2
-			echo_date 开启ss-local，提供socks5代理端口：23456
-			if [ "$ss_basic_ss_v2ray_plugin" == "0" ];then
-				ss-local -l 23456 -c $CONFIG_FILE -u -f /var/run/sslocal1.pid >/dev/null 2>&1
-			else
-				ss-local -l 23456 -c $CONFIG_FILE $ARG_V2RAY_PLUGIN -u -f /var/run/sslocal1.pid >/dev/null 2>&1
-			fi
-		fi
+		echo_date "未检测到 23456 socks 端口（Xray 可能未启动），订阅下载将走直连"
+	else
+		echo_date "检测到 Xray socks5 端口 23456，可用于代理下载"
 	fi
-	sleep 2
 }
 
 get_type_name() {
@@ -1330,19 +1319,6 @@ start_update(){
 	fi
 	# 结束
 	echo_date "-------------------------------------------------------------------"
-	if [ "$SOCKS_FLAG" == "1" ];then
-		ssrlocal=`ps | grep -w rss-local | grep -v "grep" | grep -w "23456" | awk '{print $1}'`
-		if [ -n "$ssrlocal" ];then 
-			echo_date 关闭因订阅临时开启的ssr-local进程:23456端口...
-			kill $ssrlocal  >/dev/null 2>&1
-		fi
-	elif [ "$SOCKS_FLAG" == "2" ];then
-		sslocal=`ps | grep -w ss-local | grep -v "grep" | grep -w "23456" | awk '{print $1}'`
-		if [ -n "$sslocal" ];then 
-			echo_date  关闭因订阅临时开启ss-local进程:23456端口...
-			kill $sslocal  >/dev/null 2>&1
-		fi
-	fi
 	usleep 250000
 	echo_date "一点点清理工作..."
 	rm -rf /tmp/ssr_subscribe_file.txt >/dev/null 2>&1

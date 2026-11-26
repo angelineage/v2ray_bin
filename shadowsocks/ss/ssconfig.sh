@@ -1693,11 +1693,8 @@ create_ss2022_json(){
 
 start_xray_core() {
 	if [ "$ss_basic_type" == "4" ]; then
-		if echo "$ss_basic_trojan_binary" | grep -q "^Trojan-Go"; then
-			start_trojango
-		else
-			start_trojan
-		fi
+		# Trojan-Go 与 Trojan 均由 Xray 承载，配置由 create_trojango_json / create_trojan_json 分别生成
+		start_trojan
 	elif [ "$SS2022" == "Y" ]; then
 		start_ss2022
 	else
@@ -2469,8 +2466,8 @@ apply_ss(){
 	# Xray-only: VLESS/VMess/SS2022 (type=3), Trojan/Trojan-Go (type=4)
 	[ -z "$WAN_ACTION" ] && [ "$ss_basic_type" = "3" ] && [ "$SS2022" != "Y" ] && create_v2ray_json
 	[ -z "$WAN_ACTION" ] && [ "$ss_basic_type" = "3" ] && [ "$SS2022" == "Y" ] && create_ss2022_json
-	[ -z "$WAN_ACTION" ] && [ "$ss_basic_type" = "4" ] && [ "$ss_basic_trojan_binary" == "Trojan" ] && create_trojan_json
 	[ -z "$WAN_ACTION" ] && [ "$ss_basic_type" = "4" ] && echo "$ss_basic_trojan_binary" | grep -q "^Trojan-Go" && create_trojango_json
+	[ -z "$WAN_ACTION" ] && [ "$ss_basic_type" = "4" ] && ! echo "$ss_basic_trojan_binary" | grep -q "^Trojan-Go" && create_trojan_json
 	start_xray_core
 	start_dns
 	#===load nat start===
