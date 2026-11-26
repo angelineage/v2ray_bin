@@ -4844,54 +4844,6 @@ bogus-nxdomain=220.250.64.18" rows="12" style="width:99%; font-family:'Lucida Co
 														<input type="checkbox" id="ss_basic_udp_sync" onclick="verifyFields(this, 1);" />
 													</td>
 												</tr>
-												<tr>
-													<th width="20%">Hysteria2 全局设定&nbsp;&nbsp;<a class="hintstyle" href="javascript:void(0);" onclick="openssHint(118)"><font color="#ffcc00"><u>[说明]</u></font></a><br><span style="color:#FC0;font-weight:normal;">默认不填</span></th>
-													<td>
-														<div style="line-height:32px;">
-															<span style="display:inline-block;width:70px;">混淆</span>
-															<select id="ss_basic_hy2_obfs_type" name="ss_basic_hy2_obfs_type" class="input_option" style="width:155px;" onchange="updateHy2GlobalForm();">
-																<option value="">关闭</option>
-																<option value="salamander">salamander</option>
-																<option value="gecko">gecko</option>
-															</select>
-															<span id="ss_basic_hy2_obfs_password_span" style="display:none;margin-left:8px;">
-																密码
-																<input type="text" class="input_ss_table" id="ss_basic_hy2_obfs_password" name="ss_basic_hy2_obfs_password" style="width:190px;" placeholder="混淆密码" value="">
-															</span>
-															<br id="ss_basic_hy2_gecko_br" style="display:none;">
-															<span id="ss_basic_hy2_gecko_span" style="display:none;margin-left:70px;">
-																包大小
-																<input type="text" class="input_ss_table" id="ss_basic_hy2_gecko_min" name="ss_basic_hy2_gecko_min" style="width:60px;" placeholder="512" value="">
-																-
-																<input type="text" class="input_ss_table" id="ss_basic_hy2_gecko_max" name="ss_basic_hy2_gecko_max" style="width:60px;" placeholder="1200" value="">
-															</span>
-															<br>
-															<span style="display:inline-block;width:70px;">拥塞控制</span>
-															<select id="ss_basic_hy2_congestion_type" name="ss_basic_hy2_congestion_type" class="input_option" style="width:175px;" onchange="updateHy2GlobalForm();">
-																<option value="">默认(bbr + standard)</option>
-																<option value="bbr">bbr</option>
-																<option value="reno">reno</option>
-															</select>
-															<span id="ss_basic_hy2_bbr_profile_span" style="display:none;margin-left:8px;">
-																BBR模式
-																<select id="ss_basic_hy2_bbr_profile" name="ss_basic_hy2_bbr_profile" class="input_option" style="width:140px;">
-																	<option value="standard">standard</option>
-																	<option value="conservative">conservative</option>
-																	<option value="aggressive">aggressive</option>
-																</select>
-															</span>
-															<br>
-															<span style="display:inline-block;width:70px;">带宽</span>
-															上行
-															<input type="text" class="input_ss_table" id="ss_basic_hy2_bandwidth_up_value" name="ss_basic_hy2_bandwidth_up_value" style="width:70px;" placeholder="100" value="">
-															<span style="margin:0px 12px 0px 4px;">mbps</span>
-															下行
-															<input type="text" class="input_ss_table" id="ss_basic_hy2_bandwidth_down_value" name="ss_basic_hy2_bandwidth_down_value" style="width:70px;" placeholder="200" value="">
-															<span style="margin-left:4px;">mbps</span>
-														</div>
-														<textarea id="ss_basic_hy2_global_json" name="ss_basic_hy2_global_json" style="display:none;"></textarea>
-													</td>
-												</tr>
 											</table>
 										</div>
 										<!--=====tablet_3=====-->
