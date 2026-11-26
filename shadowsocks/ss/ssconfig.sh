@@ -396,11 +396,39 @@ start_dns(){
 	#start chinadns-ng（国外上游可配置，默认 8.8.8.8:53 经 Xray socks 代理）
 	if [ "$ss_foreign_dns" == "10" ]; then
 		[ -z "$ss_chinadnsng_user" ] && ss_chinadnsng_user="8.8.8.8:53"
-		NG_UPSTREAM=${ss_chinadnsng_user%:*}
-		echo_date 开启dns2socks，用于chinadns-ng国外上游 $NG_UPSTREAM ...
+		# 国外上游：经 dns2socks 走代理（默认），支持在输入框填 ip:port
+		NG_UPSTREAM="${ss_chinadnsng_user}"
+		echo_date "开启dns2socks，用于 chinadns-ng 国外上游 ${NG_UPSTREAM} ..."
 		dns2socks 127.0.0.1:23456 "$ss_chinadnsng_user" 127.0.0.1:1055 >/dev/null 2>&1 &
 		sed -e '/^server=/d' -e 's/ipset=\/.//g' -e 's/\/gfwlist//g' /koolshare/ss/rules/gfwlist.conf > /tmp/gfwlist.txt
-		chinadns-ng -N -l ${DNSF_PORT} -c ${CDN}#${DNSC_PORT} -t 127.0.0.1#1055 -g /tmp/gfwlist.txt -m /koolshare/ss/rules/cdn.txt -M >/dev/null 2>&1 &
+		# --- 动态拼装 chinadns-ng 参数 ---
+		NG_OPTS=""
+		# 屏蔽 IPv6 (AAAA)：默认开启，-N
+		[ "$ss_chinadnsng_noipv6" != "0" ] && NG_OPTS="$NG_OPTS -N"
+		# 国内域名优先（chnlist-first）：默认开启，-M
+		[ "$ss_chinadnsng_chnfirst" != "0" ] && NG_OPTS="$NG_OPTS -M"
+		# fair 模式
+		[ "$ss_chinadnsng_fair" == "1" ] && NG_OPTS="$NG_OPTS -f"
+		# 复用端口
+		[ "$ss_chinadnsng_reuseport" == "1" ] && NG_OPTS="$NG_OPTS -r"
+		# 无 IP 应答视为国内
+		[ "$ss_chinadnsng_noip" == "1" ] && NG_OPTS="$NG_OPTS -n"
+		# 详细日志
+		[ "$ss_chinadnsng_verbose" == "1" ] && NG_OPTS="$NG_OPTS -v"
+		# 上游超时秒数 -o（1-60）
+		NG_TIMEOUT="${ss_chinadnsng_timeout:-5}"
+		case "$NG_TIMEOUT" in ''|*[!0-9]*) NG_TIMEOUT=5;; esac
+		[ "$NG_TIMEOUT" -lt 1 ] 2>/dev/null && NG_TIMEOUT=1
+		[ "$NG_TIMEOUT" -gt 60 ] 2>/dev/null && NG_TIMEOUT=60
+		NG_OPTS="$NG_OPTS -o $NG_TIMEOUT"
+		# 重复次数 -p（1-10）
+		NG_REPEAT="${ss_chinadnsng_repeat:-1}"
+		case "$NG_REPEAT" in ''|*[!0-9]*) NG_REPEAT=1;; esac
+		[ "$NG_REPEAT" -lt 1 ] 2>/dev/null && NG_REPEAT=1
+		[ "$NG_REPEAT" -gt 10 ] 2>/dev/null && NG_REPEAT=10
+		NG_OPTS="$NG_OPTS -p $NG_REPEAT"
+		echo_date "启动 chinadns-ng：国内DNS ${CDN}#${DNSC_PORT} | 国外DNS 127.0.0.1#1055(${NG_UPSTREAM}) | 参数:${NG_OPTS}"
+		chinadns-ng ${NG_OPTS} -l ${DNSF_PORT} -c ${CDN}#${DNSC_PORT} -t 127.0.0.1#1055 -g /tmp/gfwlist.txt -m /koolshare/ss/rules/cdn.txt >/dev/null 2>&1 &
 	fi
 
 	#start https_dns_proxy

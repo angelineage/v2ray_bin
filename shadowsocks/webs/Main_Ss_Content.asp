@@ -420,8 +420,8 @@ function save() {
 	//define dbus object to save
 	var dbus = {};
 	//key define
-	var params_input = ["ssconf_basic_node", "ss_basic_mode", "ss_basic_server", "ss_basic_port", "ss_basic_method", "ssconf_basic_test_node", "ssconf_basic_test_domain", "ss_dns_china", "ss_dns_china_user", "ss_foreign_dns", "ss_dns2socks_user", "ss_chinadns_user", "ss_chinadns1_user", "ss_direct_user", "ss_basic_rule_update", "ss_basic_rule_update_time", "ssr_subscribe_mode", "ss_basic_online_links_goss", "ss_basic_node_update", "ss_basic_node_update_day", "ss_basic_node_update_hr", "ss_base64_links", "ss_basic_refreshrate", "ss_acl_default_port", "ss_online_action", "ss_acl_default_mode", "ss_basic_v2ray_uuid", "ss_basic_v2ray_alterid", "ss_basic_v2ray_protocol", "ss_basic_v2ray_security", "ss_basic_v2ray_network", "ss_basic_v2ray_headtype_tcp", "ss_basic_v2ray_network_host", "ss_basic_v2ray_serviceName", "ss_basic_v2ray_network_path", "ss_basic_v2ray_xhttp_mode", "ss_basic_v2ray_xhttp_extra", "ss_basic_v2ray_network_tlshost", "ss_basic_trojan_sni", "ss_basic_trojan_binary", "ss_basic_fingerprint", "ss_basic_v2ray_network_flow", "ss_basic_v2ray_network_security", "ss_basic_v2ray_mux_concurrency", "ss_basic_xray_publicKey", "ss_basic_xray_shortId", "ss_reboot_check", "ss_basic_week", "ss_basic_day", "ss_basic_inter_min", "ss_basic_inter_hour", "ss_basic_inter_day", "ss_basic_inter_pre", "ss_basic_time_hour", "ss_basic_time_min", "ss_basic_tri_reboot_time", "ss_basic_tri_reboot_policy", "ss_basic_dnsmasq_fastlookup", "ss_basic_server_resolver", "ss_basic_server_resolver_user"];
-	var params_check = ["ss_basic_enable", "ss_basic_gfwlist_update", "ss_basic_chnroute_update", "ss_basic_cdn_update", "ss_basic_v2ray_use_json", "ss_basic_v2ray_mux_enable", "ss_basic_allowinsecure", "ss_basic_fragment", "ss_basic_dns_hijack", "ss_basic_udp_sync"];
+	var params_input = ["ssconf_basic_node", "ss_basic_mode", "ss_basic_server", "ss_basic_port", "ss_basic_method", "ssconf_basic_test_node", "ssconf_basic_test_domain", "ss_dns_china", "ss_dns_china_user", "ss_foreign_dns", "ss_dns2socks_user", "ss_chinadns_user", "ss_chinadns1_user", "ss_chinadnsng_user", "ss_chinadnsng_timeout", "ss_chinadnsng_repeat", "ss_direct_user", "ss_basic_rule_update", "ss_basic_rule_update_time", "ssr_subscribe_mode", "ss_basic_online_links_goss", "ss_basic_node_update", "ss_basic_node_update_day", "ss_basic_node_update_hr", "ss_base64_links", "ss_basic_refreshrate", "ss_acl_default_port", "ss_online_action", "ss_acl_default_mode", "ss_basic_v2ray_uuid", "ss_basic_v2ray_alterid", "ss_basic_v2ray_protocol", "ss_basic_v2ray_security", "ss_basic_v2ray_network", "ss_basic_v2ray_headtype_tcp", "ss_basic_v2ray_network_host", "ss_basic_v2ray_serviceName", "ss_basic_v2ray_network_path", "ss_basic_v2ray_xhttp_mode", "ss_basic_v2ray_xhttp_extra", "ss_basic_v2ray_network_tlshost", "ss_basic_trojan_sni", "ss_basic_trojan_binary", "ss_basic_fingerprint", "ss_basic_v2ray_network_flow", "ss_basic_v2ray_network_security", "ss_basic_v2ray_mux_concurrency", "ss_basic_xray_publicKey", "ss_basic_xray_shortId", "ss_reboot_check", "ss_basic_week", "ss_basic_day", "ss_basic_inter_min", "ss_basic_inter_hour", "ss_basic_inter_day", "ss_basic_inter_pre", "ss_basic_time_hour", "ss_basic_time_min", "ss_basic_tri_reboot_time", "ss_basic_tri_reboot_policy", "ss_basic_dnsmasq_fastlookup", "ss_basic_server_resolver", "ss_basic_server_resolver_user"];
+	var params_check = ["ss_basic_enable", "ss_basic_gfwlist_update", "ss_basic_chnroute_update", "ss_basic_cdn_update", "ss_basic_v2ray_use_json", "ss_basic_v2ray_mux_enable", "ss_basic_allowinsecure", "ss_basic_fragment", "ss_basic_dns_hijack", "ss_basic_udp_sync", "ss_chinadnsng_noipv6", "ss_chinadnsng_chnfirst", "ss_chinadnsng_fair", "ss_chinadnsng_reuseport", "ss_chinadnsng_noip", "ss_chinadnsng_verbose"];
 	var params_base64_a = ["ss_dnsmasq", "ss_wan_white_ip", "ss_wan_white_domain", "ss_wan_black_ip", "ss_wan_black_domain", "ss_online_links"];
 	var params_base64_b = ["ss_basic_password", "ss_basic_custom"];
 	// collect data from input
@@ -1072,6 +1072,7 @@ function update_visibility() {
 	showhide("ss_chinadns_user", (f == "2"));
 	showhide("ss_dns2socks_user", (f == "3"));
 	showhide("ss_chinadnsng_user", (f == "10"));
+	showhide("dns_plan_chinadnsng", (f == "10"));
 	showhide("ss_chinadns1_user", (f == "5"));
 	showhide("ss_direct_user", (f == "8"));
 	showhide("ss_basic_tri_reboot_time_note", (g != "0"));
@@ -4783,6 +4784,13 @@ function set_cron(action) {
 														<span id="ss_foreign_dns_note"></span>
 													</td>
 												</tr>
+											<tr id="dns_plan_chinadnsng" style="display: none;">
+												<th width="20%">ChinaDNS-NG 参数</th>
+												<td>
+													上游超时 <input type="text" class="input_ss_table" id="ss_chinadnsng_timeout" name="ss_chinadnsng_timeout" style="width:44px" value="5"> 秒&nbsp;&nbsp;重复次数 <input type="text" class="input_ss_table" id="ss_chinadnsng_repeat" name="ss_chinadnsng_repeat" style="width:44px" value="1"> 次<br/>
+													<label><input type="checkbox" id="ss_chinadnsng_noipv6" name="ss_chinadnsng_noipv6" checked/> 屏蔽IPv6(AAAA)</label>&nbsp;<label><input type="checkbox" id="ss_chinadnsng_chnfirst" name="ss_chinadnsng_chnfirst" checked/> 国内域名优先</label>&nbsp;<label><input type="checkbox" id="ss_chinadnsng_fair" name="ss_chinadnsng_fair"/> fair模式</label>&nbsp;<label><input type="checkbox" id="ss_chinadnsng_reuseport" name="ss_chinadnsng_reuseport"/> 复用端口</label>&nbsp;<label><input type="checkbox" id="ss_chinadnsng_noip" name="ss_chinadnsng_noip"/> 无IP应答视为国内</label>&nbsp;<label><input type="checkbox" id="ss_chinadnsng_verbose" name="ss_chinadnsng_verbose"/> 详细日志</label>
+												</td>
+											</tr>
 												<tr id="dns_plan_foreign_game2" style="display: none;">
 												<th width="20%"><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(26)">选择国外DNS</a></th>
 													<td>
