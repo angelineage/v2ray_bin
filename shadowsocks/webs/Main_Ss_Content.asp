@@ -40,7 +40,7 @@ var refreshRate;
 var _xrayStub = {className:"", style:{display:"none"}, value:"", checked:false, innerHTML:"", disabled:false,
   focus:function(){}, select:function(){}, click:function(){}, setAttribute:function(){},
   getAttribute:function(){return null;}, addEventListener:function(){}, removeAttribute:function(){}};
-var _E_orig = (typeof E === "function") ? E : function(id){return document.getElementById(id);};
+var _E_orig = function(id){return document.getElementById(id);};
 function E(id){ var el = _E_orig(id); return el ? el : _xrayStub; }
 
 function init() {
