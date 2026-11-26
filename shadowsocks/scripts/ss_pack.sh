@@ -16,7 +16,7 @@ mkdir shadowsocks/webs
 mkdir shadowsocks/res
 
 TARGET_FOLDER=/tmp/shadowsocks
-TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip smartdns xray"
+TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip xray"
 cp /koolshare/scripts/ss_install.sh $TARGET_FOLDER/install.sh
 cp /koolshare/scripts/uninstall_shadowsocks.sh $TARGET_FOLDER/uninstall.sh
 cp /koolshare/scripts/ss_* $TARGET_FOLDER/scripts/

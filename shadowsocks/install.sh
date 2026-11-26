@@ -49,7 +49,7 @@ if [ -n "$MOUNTED" ];then
 fi
 
 echo_date 清理旧文件
-TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip smartdns xray"
+TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip xray"
 rm -rf /koolshare/ss/*
 rm -rf /koolshare/scripts/ss_*
 rm -rf /koolshare/webs/Main_Ss*

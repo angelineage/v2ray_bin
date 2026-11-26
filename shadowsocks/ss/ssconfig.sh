@@ -144,7 +144,6 @@ restore_conf(){
 	rm -rf /tmp/custom.conf
 	rm -rf /tmp/wblist.conf
 	rm -rf /tmp/ss_host.conf
-	rm -rf /tmp/smartdns.conf
 }
 
 kill_process(){
@@ -206,11 +205,6 @@ kill_process(){
 	if [ -n "$dns2socks_process" ];then 
 		echo_date 关闭dns2socks进程...
 		killall dns2socks >/dev/null 2>&1
-	fi
-	smartdns_process=$(pidof smartdns)
-	if [ -n "$smartdns_process" ]; then
-		echo_date 关闭smartdns进程...
-		killall smartdns >/dev/null 2>&1
 	fi
 	pdu_process=`pidof pdu`
 	if [ -n "$pdu_process" ];then 
@@ -317,9 +311,6 @@ get_dns_name() {
 		8)
 			echo "直连"
 		;;
-		9)
-			echo "SmartDNS"
-		;;
 		10)
 			echo "ChinaDNS-NG"
 		;;
@@ -396,25 +387,18 @@ start_dns(){
 	
 	#start chinadns1
 	if [ "$ss_foreign_dns" == "5" ]; then
-		# 当国内SmartDNS和国外chiandns1冲突
-		if [ "$ss_dns_china" == "13" -a "$ss_foreign_dns" == "5" ]; then
-			echo_date "！！中国DNS选择SmartDNS和外国DNS选择chiandns1冲突，将外国DNS默认改为dns2socks！！"
-			ss_foreign_dns="3"
-			dbus set ss_foreign_dns="3"
-			echo_date 开启dns2socks，用于chinadns1上游...
-			dns2socks 127.0.0.1:23456 "$ss_dns2socks_user" 127.0.0.1:$DNSF_PORT >/dev/null 2>&1 &
-		else
-			echo_date 开启dns2socks，用于chinadns1上游...
-			dns2socks 127.0.0.1:23456 "$ss_chinadns1_user" 127.0.0.1:1055 >/dev/null 2>&1 &
-			echo_date 开启chinadns1，用于dns解析...
-			chinadns1 -p $DNSF_PORT -s $CDN,127.0.0.1:1055 -d -c /koolshare/ss/rules/chnroute.txt >/dev/null 2>&1 &
-		fi
+		echo_date 开启dns2socks，用于chinadns1上游...
+		dns2socks 127.0.0.1:23456 "$ss_chinadns1_user" 127.0.0.1:1055 >/dev/null 2>&1 &
+		echo_date 开启chinadns1，用于dns解析...
+		chinadns1 -p $DNSF_PORT -s $CDN,127.0.0.1:1055 -d -c /koolshare/ss/rules/chnroute.txt >/dev/null 2>&1 &
 	fi
 
-	#start chinadns_ng
+	#start chinadns-ng（国外上游可配置，默认 8.8.8.8:53 经 Xray socks 代理）
 	if [ "$ss_foreign_dns" == "10" ]; then
-		echo_date 开启dns2socks，用于chinadns-ng的国外上游...
-		dns2socks 127.0.0.1:23456 "$ss_chinadns1_user" 127.0.0.1:1055 >/dev/null 2>&1 &
+		[ -z "$ss_chinadnsng_user" ] && ss_chinadnsng_user="8.8.8.8:53"
+		NG_UPSTREAM=${ss_chinadnsng_user%:*}
+		echo_date 开启dns2socks，用于chinadns-ng国外上游 $NG_UPSTREAM ...
+		dns2socks 127.0.0.1:23456 "$ss_chinadnsng_user" 127.0.0.1:1055 >/dev/null 2>&1 &
 		sed -e '/^server=/d' -e 's/ipset=\/.//g' -e 's/\/gfwlist//g' /koolshare/ss/rules/gfwlist.conf > /tmp/gfwlist.txt
 		chinadns-ng -N -l ${DNSF_PORT} -c ${CDN}#${DNSC_PORT} -t 127.0.0.1#1055 -g /tmp/gfwlist.txt -m /koolshare/ss/rules/cdn.txt -M >/dev/null 2>&1 &
 	fi
@@ -449,40 +433,6 @@ start_dns(){
 			echo_date 开启dns2socks，用于dns解析...
 			dns2socks 127.0.0.1:23456 "$ss_dns2socks_user" 127.0.0.1:$DNSF_PORT > /dev/null 2>&1 &
 		fi
-	fi
-
-# 开启SmartDNS
-	if [ "$ss_dns_china" == "13" ] && [ "$ss_foreign_dns" == "9" ]; then
-		# 国内国外都启用SmartDNS （此情况下，如果是gfwlist模式则不用cdn.conf；如果是大陆白名单模式也不需要使用cdn.conf）
-
-		echo_date "开启SmartDNS，用于DNS解析..."
-		#if [ "$(nvram get ipv6_service)" == "disabled" ]; then
-		#	sed 's/# force-AAAA-SOA yes/force-AAAA-SOA yes/g' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#	sed -i '/^#/d /^$/d' /tmp/smartdns.conf
-		#else
-			sed '/^#/d /^$/d' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#fi
-		smartdns -c /tmp/smartdns.conf >/dev/null 2>&1 &
-	elif [ "$ss_dns_china" == "13" ] && [ "$ss_foreign_dns" != "9" ]; then
-		# 国内启用SmartDNS，国外不启用SmartDNS （此情况下，如果是gfwlist模式则不用cdn.conf；如果是大陆白名单模式则是根据国外DNS的选择而决定是否使用cdn.conf）
-		echo_date "开启SmartDNS，用于DNS解析..."
-		#if [ "$(nvram get ipv6_service)" == "disabled" ]; then
-		#	sed 's/# force-AAAA-SOA yes/force-AAAA-SOA yes/g' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#	sed -i '/^#/d /^$/d /foreign/d' /tmp/smartdns.conf
-		#else
-			sed '/^#/d /^$/d /foreign/d' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#fi
-		smartdns -c /tmp/smartdns.conf >/dev/null 2>&1 &
-	elif [ "$ss_dns_china" != "13" ] && [ "$ss_foreign_dns" == "9" ]; then
-		# 国内不启用SmartDNS，国外启用SmartDNS （此情况下，如果是gfwlist模式则不用cdn.conf；如果是大陆白名单模式则需要使用cdn.conf）
-		echo_date "开启SmartDNS，用于DNS解析..."
-		#if [ "$(nvram get ipv6_service)" == "disabled" ]; then
-		#	sed 's/# force-AAAA-SOA yes/force-AAAA-SOA yes/g' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#	sed -i '/^#/d /^$/d /china/d' /tmp/smartdns.conf
-		#else
-			sed '/^#/d /^$/d /china/d' /koolshare/ss/rules/smartdns_template.conf > /tmp/smartdns.conf
-		#fi
-		smartdns -c /tmp/smartdns.conf >/dev/null 2>&1 &
 	fi
 
 	# direct
@@ -545,10 +495,6 @@ create_dnsmasq_conf(){
 	[ "$ss_dns_china" == "12" ] && {
 		[ -n "$ss_dns_china_user" ] && CDN="$ss_dns_china_user" || CDN="114.114.114.114"
 	}
-	if [ "$ss_dns_china" == "13" ];then
-		CDN="127.0.0.1"
-		DNSC_PORT=5335
-	fi
 	# delete pre settings
 	rm -rf /tmp/sscdn.conf
 	rm -rf /tmp/custom.conf
@@ -560,7 +506,6 @@ create_dnsmasq_conf(){
 	rm -rf /jffs/configs/dnsmasq.d/cdn.conf
 	rm -rf /jffs/configs/dnsmasq.d/gfwlist.conf
 	rm -rf /jffs/scripts/dnsmasq.postconf
-	rm -rf /tmp/smartdns.conf
 	
 	# custom dnsmasq settings by user
 	if [ -n "$ss_dnsmasq" ];then
@@ -679,7 +624,7 @@ create_dnsmasq_conf(){
 		else
 			# 其它情况，均使用国外优先模式，以下区分是否加载cdn.conf
 			# if [ "$ss_foreign_dns" == "2" ] || [ "$ss_foreign_dns" == "5" ] || [ "$ss_foreign_dns" == "9" -a "$ss_dns_china" == "13" ]; then
-			if [ "$ss_foreign_dns" == "2" -o "$ss_foreign_dns" == "5" -a "$ss_dns_china" != "13" -o "$ss_foreign_dns" == "10" ]; then
+			if [ "$ss_foreign_dns" == "2" -o "$ss_foreign_dns" == "5" -o "$ss_foreign_dns" == "10" ]; then
 				# 因为chinadns1 chinadns2自带国内cdn，所以也不需要cdn.conf
 				echo_date 自动判断dns解析使用国外优先模式...
 				echo_date 国外解析方案【$(get_dns_name $ss_foreign_dns)】自带国内cdn，无需加载cdn.conf，路由器开销小...

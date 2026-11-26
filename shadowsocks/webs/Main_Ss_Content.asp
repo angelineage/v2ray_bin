@@ -659,7 +659,7 @@ function push_data(obj) {
 }
 
 function decode_show() {
-	var temp_ss = ["ss_dnsmasq", "ss_wan_white_ip", "ss_wan_white_domain", "ss_wan_black_ip", "ss_wan_black_domain", "ss_online_links", "ss_basic_custom", "ss_basic_hy2_global_json"];
+	var temp_ss = ["ss_dnsmasq", "ss_wan_white_ip", "ss_wan_white_domain", "ss_wan_black_ip", "ss_wan_black_domain", "ss_online_links", "ss_basic_custom"];
 	for (var i = 0; i < temp_ss.length; i++) {
 		var el = E(temp_ss[i]);
 		if (!el) {
@@ -1071,7 +1071,7 @@ function update_visibility() {
 	showhide("ss_basic_server_resolver_user", h);
 	showhide("ss_chinadns_user", (f == "2"));
 	showhide("ss_dns2socks_user", (f == "3"));
-	showhide("ss_sstunnel_user", (f == "4"));
+	showhide("ss_chinadnsng_user", (f == "10"));
 	showhide("ss_chinadns1_user", (f == "5"));
 	showhide("ss_direct_user", (f == "8"));
 	showhide("ss_basic_tri_reboot_time_note", (g != "0"));
@@ -1080,6 +1080,8 @@ function update_visibility() {
 		$("#ss_foreign_dns_note").html('DNS over HTTPS (DoH)，<a href="https://cloudflare-dns.com/zh-Hans/" target="_blank"><em>cloudflare服务</em></a>，拒绝一切污染~');
 	}else if(f == "7"){
 		$("#ss_foreign_dns_note").html('v2ray_dns只有启用v2ray节点的时能使用');
+	}else if(f == "10"){
+		$("#ss_foreign_dns_note").html('ChinaDNS-NG：国内DNS用「选择中国DNS」，国外DNS走代理上游，上方填国外上游地址；推荐方案。');
 	}else{
 		$("#ss_foreign_dns_note").html('');
 	}
@@ -4753,7 +4755,6 @@ function set_cron(action) {
 															<option value="10">百度DNS【180.76.76.76】</option>
 															<option value="11">DNSpod DNS【119.29.29.29】</option>
 															<option value="12">自定义</option>
-															<option value="13">SmartDNS</option>
 														</select>
 														<input type="text" class="input_ss_table" id="ss_dns_china_user" name="ss_dns_china_user" value="">
 													</td>
@@ -4772,13 +4773,12 @@ function set_cron(action) {
 															<option value="6">https_dns_proxy</option>
 															<option value="7">v2ray_dns</option>
 															<option value="8">直连</option>
-															<option value="9">SmartDNS</option>
-															<option value="10">ChinaDNS-NG</option>
+															<option value="10">ChinaDNS-NG【推荐】</option>
 														</select>
-														<input type="text" class="input_ss_table" id="ss_dns2socks_user" name="ss_dns2socks_user" style="width:160px" placeholder="需端口号如：8.8.8.8:53" value="8.8.8.8:53">
-														<input type="text" class="input_ss_table" id="ss_chinadns1_user" name="ss_chinadns1_user" style="width:160px" placeholder="需端口号如：8.8.8.8:53" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_dns2socks_user" name="ss_dns2socks_user" style="width:160px" placeholder="dns2socks 上游如：8.8.8.8:53" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_chinadns1_user" name="ss_chinadns1_user" style="width:160px" placeholder="chinadns1 上游如：8.8.8.8:53" value="8.8.8.8:53">
 														<input type="text" class="input_ss_table" id="ss_chinadns_user" name="ss_chinadns_user" style="width:160px" placeholder="需端口号如：8.8.8.8:53" value="8.8.8.8:53">
-														<input type="text" class="input_ss_table" id="ss_sstunnel_user" name="ss_sstunnel_user" style="width:160px" placeholder="需端口号如：8.8.8.8:53" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_chinadnsng_user" name="ss_chinadnsng_user" style="width:160px" placeholder="ChinaDNS-NG 国外上游如：8.8.8.8:53" value="8.8.8.8:53">
 														<input type="text" class="input_ss_table" id="ss_direct_user" name="ss_direct_user" style="width:160px" placeholder="需端口号如：8.8.8.8#53" value="8.8.8.8#53">
 														<span id="ss_foreign_dns_note"></span>
 													</td>
@@ -4887,6 +4887,58 @@ bogus-nxdomain=220.250.64.18" rows="12" style="width:99%; font-family:'Lucida Co
 											</table>
 										</div>
 										<!--=====tablet_3=====-->
+<div id="tablet_3" style="display: none;">
+											<table style="margin:-1px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+												<tr id="ss_wan_white_ip_tr">
+													<th width="20%"><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(38)">IP/CIDR白名单</a><br>
+														<br>
+														<font color="#ffcc00">添加不需要走代理的外网ip地址</font>
+													</th>
+													<td>
+														<textarea placeholder="# 填入不需要走代理的外网ip地址，一行一个，格式（IP/CIDR）如下
+2.2.2.2
+3.3.3.3
+4.4.4.4/24" cols="50" rows="7" id="ss_wan_white_ip" name="ss_wan_white_ip" style="width:99%; font-family:'Lucida Console'; font-size:12px;background:#475A5F;color:#FFFFFF;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+													</td>
+												</tr>
+												<tr id="ss_wan_white_domain_tr">
+													<th width="20%"><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(39)">域名白名单</a><br>
+														<br>
+														<font color="#ffcc00">添加不需要走代理的域名</font>
+													</th>
+													<td>
+														<textarea placeholder="# 填入不需要走代理的域名，一行一个，格式如下：
+google.com
+facebook.com
+# 需要清空电脑DNS缓存，才能立即看到效果。" cols="50" rows="7" id="ss_wan_white_domain" name="ss_wan_white_domain" style="width:99%; font-family:'Lucida Console'; font-size:12px;background:#475A5F;color:#FFFFFF;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+													</td>
+												</tr>
+												<tr id="ss_wan_black_ip_tr">
+													<th width="20%"><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(40)">IP/CIDR黑名单</a><br>
+														<br>
+														<font color="#ffcc00">添加需要强制走代理的外网ip地址</font>
+													</th>
+													<td>
+														<textarea placeholder="# 填入需要强制走代理的外网ip地址，一行一个，格式（IP/CIDR）如下：
+5.5.5.5
+6.6.6.6
+7.7.7.7/8" cols="50" rows="7" id="ss_wan_black_ip" name="ss_wan_black_ip" style="width:99%; font-family:'Lucida Console'; font-size:12px;background:#475A5F;color:#FFFFFF;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+													</td>
+												</tr>
+												<tr id="ss_wan_black_domain_tr">
+													<th width="20%"><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(41)">域名黑名单</a><br>
+														<br>
+														<font color="#ffcc00">添加需要强制走代理的域名</font>
+													</th>
+													<td>
+														<textarea placeholder="# 填入需要强制走代理的域名，一行一个，格式如下：
+baidu.com
+taobao.com
+# 需要清空电脑DNS缓存，才能立即看到效果。" cols="50" rows="7" id="ss_wan_black_domain" name="ss_wan_black_domain" style="width:99%; font-family:'Lucida Console'; font-size:12px;background:#475A5F;color:#FFFFFF;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+													</td>
+												</tr>
+											</table>
+										</div>
 										
 										<!--=====tablet_3_1=====-->
 										

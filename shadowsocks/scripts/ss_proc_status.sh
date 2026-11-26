@@ -55,9 +55,6 @@ get_dns_name() {
 		8)
 			echo "koolgame内置"
 		;;
-		9)
-			echo "SmartDNS"
-		;;
 		10)
 			echo "ChinaDNS-NG"
 		;;
@@ -125,7 +122,6 @@ check_status(){
 	XRAY=`pidof xray`
 	HDP=`pidof https_dns_proxy`
 	DMQ=`pidof dnsmasq`
-	SMD=$(pidof smartdns)
 	game_on=`dbus list ss_acl_mode|cut -d "=" -f 2 | grep 3`
 
 	echo_version
@@ -146,17 +142,12 @@ check_status(){
 		[ -n "$CHINADNS1" ] && echo "chinadns1	工作中	pid：$CHINADNS1" || echo "chinadns1	未运行"
 	elif [ "$ss_foreign_dns" == "6" ];then
 		[ -n "$HDP" ] && echo "https_dns_proxy	工作中	pid：$HDP" || echo "https_dns_proxy	未运行"
-	elif [ "$ss_foreign_dns" == "9" ]; then
-		[ -n "$SMD" ] && echo "SmartDNS	工作中	pid：$SMD" || echo "SmartDNS	未运行"
 	elif [ "$ss_foreign_dns" == "10" ]; then
 		[ -n "$DNS2SOCKS" ] && echo "dns2socks	工作中	pid：$DNS2SOCKS" || echo "dns2socks	未运行"
 		[ -n "$CHINADNSNG" ] && echo "ChinaDNS-NG	工作中	pid：$CHINADNSNG" || echo "ChinaDNS-NG	未运行"
 	elif [ "$ss_foreign_dns" == "4" ];then
 		echo "ss-tunnel 已移除，请改用 dns2socks"
 	fi
-	[ "$ss_dnschina" == "13" ] &&{
-		[ "$ss_foreign_dns" != "9" ] && [ -n "$SMD" ] && echo "SmartDNS	工作中	pid：$SMD" || echo "SmartDNS	未运行"
-	}
 	[ -n "$DMQ" ] && echo "dnsmasq		工作中	pid：$DMQ" || echo "dnsmasq	未运行"
 
 	echo -----------------------------------------------------------

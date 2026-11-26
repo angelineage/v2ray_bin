@@ -15,7 +15,7 @@ if [ -n "$MOUNTED" ];then
 	umount /usr/sbin/dnsmasq
 	service restart_dnsmasq >/dev/null 2>&1
 fi
-TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip smartdns xray"
+TARGET_BIN="base64_encode cdns chinadns chinadns1 chinadns-ng dns2socks dnsmasq httping https_dns_proxy jq koolbox resolveip xray"
 
 rm -rf /koolshare/ss/*
 rm -rf /koolshare/scripts/ss_*
