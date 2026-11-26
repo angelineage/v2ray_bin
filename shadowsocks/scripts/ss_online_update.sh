@@ -15,7 +15,9 @@ DEL_SUBSCRIBE=0
 SOCKS_FLAG=0
 
 url_decode(){
-	printf '%b' "$(printf '%s' "$1" | tr '+' ' ' | sed 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')"
+	local __u="$1"
+	[ -z "$__u" ] && __u=$(cat)
+	printf '%b' "$(printf '%s' "$__u" | tr '+' ' ' | sed 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')"
 }
 
 # ==============================
@@ -1083,7 +1085,7 @@ get_vless_config(){
 	v2ray_type=$(echo "$decode_link" | tr '?&#' '\n' | grep -iE '^headerType=' | awk -F'=' '{print $2}')
 	v2ray_tls=$(echo "$decode_link" | tr '?&#' '\n' | grep 'security=' | awk -F'=' '{print $2}')	 # tls不会是关闭状态
 	v2ray_flow=$(echo "$decode_link" | tr '?&#' '\n' | grep 'flow=' | awk -F'=' '{print $2}')
-	v2ray_path=$(echo "$decode_link" | tr '?&#' '\n' | grep 'path=' | awk -F'=' '{print $2}')
+	v2ray_path=$(echo "$decode_link" | tr '?&#' '\n' | grep '^path=' | awk -F'=' '{print $2}' | url_decode)
 	v2ray_seed=$(echo "$decode_link" | tr '?&#' '\n' | grep 'seed=' | awk -F'=' '{print $2}')
 	v2ray_host=$(echo "$decode_link" | tr '?&#' '\n' | grep 'host=' | awk -F'=' '{print $2}')
 	v2ray_tlshost=$(echo "$decode_link" | tr '?&#' '\n' | grep 'sni=' | awk -F'=' '{print $2}')
@@ -1960,7 +1962,7 @@ add() {
 			[ "$NODE_FORMAT" = "hy2" ] && NODE_FORMAT="hysteria2"
 			#echo $NODE_FORMAT
 			link=$(echo $ssrlink | cut -f3-  -d/ | urldecode | sed 's/[\r\n ]//g')
-			#echo $link
+			link=$(echo $ssrlink | cut -f3-  -d/ | sed 's/[\r\n ]//g')
 			if [ -n "$NODE_FORMAT" ] && [ -n "$link" ]; then
 				echo_date 检测到${NODE_FORMAT}链接...开始尝试解析...
 				remarks='AddByLink'
