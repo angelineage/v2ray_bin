@@ -85,8 +85,10 @@ use_chn_plan(){
 		pc_insert "no-poll" "server=$CDN1#53" "/etc/dnsmasq.conf"
 		pc_insert "no-poll" "all-servers" "/etc/dnsmasq.conf"
 	else
-		# 选择其它国内DNS时候
-		pc_insert "no-poll" "server=$CDN#53" "/etc/dnsmasq.conf"
+		# 选择其它国内DNS时候，支持逗号分隔多个（主/次/备），dnsmasq 原生并发查询
+		for _cdn_one in `echo "$CDN" | tr ',' ' '`; do
+			[ -n "$_cdn_one" ] && pc_insert "no-poll" "server=$_cdn_one#53" "/etc/dnsmasq.conf"
+		done
 	fi
 	pc_insert "no-poll" "no-resolv" "/etc/dnsmasq.conf"
 }
@@ -102,7 +104,10 @@ use_for_plan(){
 		[ -z "$ss_direct_user" ] && ss_direct_user="8.8.8.8#53"
 
 		pc_replace "cache-size=1500" "cache-size=9999" $CONFIG
-		pc_insert "no-poll" "server=$ss_direct_user" "/etc/dnsmasq.conf"
+		# 直连 DNS 支持逗号分隔多个（主/次/备）
+		for _dir_one in `echo "$ss_direct_user" | tr ',' ' '`; do
+			[ -n "$_dir_one" ] && pc_insert "no-poll" "server=$_dir_one" "/etc/dnsmasq.conf"
+		done
 		pc_insert "no-poll" "no-resolv" "/etc/dnsmasq.conf"
 	else
 		pc_replace "cache-size=1500" "cache-size=9999" $CONFIG

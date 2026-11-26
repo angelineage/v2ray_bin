@@ -420,8 +420,8 @@ function save() {
 	//define dbus object to save
 	var dbus = {};
 	//key define
-	var params_input = ["ssconf_basic_node", "ss_basic_mode", "ss_basic_server", "ss_basic_port", "ss_basic_method", "ssconf_basic_test_node", "ssconf_basic_test_domain", "ss_dns_china", "ss_dns_china_user", "ss_foreign_dns", "ss_dns2socks_user", "ss_chinadns_user", "ss_chinadns1_user", "ss_chinadnsng_user", "ss_chinadnsng_timeout", "ss_chinadnsng_repeat", "ss_direct_user", "ss_basic_rule_update", "ss_basic_rule_update_time", "ssr_subscribe_mode", "ss_basic_online_links_goss", "ss_basic_node_update", "ss_basic_node_update_day", "ss_basic_node_update_hr", "ss_base64_links", "ss_basic_refreshrate", "ss_acl_default_port", "ss_online_action", "ss_acl_default_mode", "ss_basic_v2ray_uuid", "ss_basic_v2ray_alterid", "ss_basic_v2ray_protocol", "ss_basic_v2ray_security", "ss_basic_v2ray_network", "ss_basic_v2ray_headtype_tcp", "ss_basic_v2ray_network_host", "ss_basic_v2ray_serviceName", "ss_basic_v2ray_network_path", "ss_basic_v2ray_xhttp_mode", "ss_basic_v2ray_xhttp_extra", "ss_basic_v2ray_network_tlshost", "ss_basic_trojan_sni", "ss_basic_trojan_binary", "ss_basic_fingerprint", "ss_basic_v2ray_network_flow", "ss_basic_v2ray_network_security", "ss_basic_v2ray_mux_concurrency", "ss_basic_xray_publicKey", "ss_basic_xray_shortId", "ss_reboot_check", "ss_basic_week", "ss_basic_day", "ss_basic_inter_min", "ss_basic_inter_hour", "ss_basic_inter_day", "ss_basic_inter_pre", "ss_basic_time_hour", "ss_basic_time_min", "ss_basic_tri_reboot_time", "ss_basic_tri_reboot_policy", "ss_basic_dnsmasq_fastlookup", "ss_basic_server_resolver", "ss_basic_server_resolver_user"];
-	var params_check = ["ss_basic_enable", "ss_basic_gfwlist_update", "ss_basic_chnroute_update", "ss_basic_cdn_update", "ss_basic_v2ray_use_json", "ss_basic_v2ray_mux_enable", "ss_basic_allowinsecure", "ss_basic_fragment", "ss_basic_dns_hijack", "ss_basic_udp_sync", "ss_chinadnsng_noipv6", "ss_chinadnsng_chnfirst", "ss_chinadnsng_fair", "ss_chinadnsng_reuseport", "ss_chinadnsng_noip", "ss_chinadnsng_verbose"];
+	var params_input = ["ssconf_basic_node", "ss_basic_mode", "ss_basic_server", "ss_basic_port", "ss_basic_method", "ssconf_basic_test_node", "ssconf_basic_test_domain", "ss_dns_china", "ss_dns_china_user", "ss_foreign_dns", "ss_dns2socks_user", "ss_chinadns_user", "ss_chinadns1_user", "ss_chinadnsng_user", "ss_chinadnsng_timeout", "ss_chinadnsng_repeat", "ss_doh_preset", "ss_doh_primary", "ss_direct_user", "ss_basic_rule_update", "ss_basic_rule_update_time", "ssr_subscribe_mode", "ss_basic_online_links_goss", "ss_basic_node_update", "ss_basic_node_update_day", "ss_basic_node_update_hr", "ss_base64_links", "ss_basic_refreshrate", "ss_acl_default_port", "ss_online_action", "ss_acl_default_mode", "ss_basic_v2ray_uuid", "ss_basic_v2ray_alterid", "ss_basic_v2ray_protocol", "ss_basic_v2ray_security", "ss_basic_v2ray_network", "ss_basic_v2ray_headtype_tcp", "ss_basic_v2ray_network_host", "ss_basic_v2ray_serviceName", "ss_basic_v2ray_network_path", "ss_basic_v2ray_xhttp_mode", "ss_basic_v2ray_xhttp_extra", "ss_basic_v2ray_network_tlshost", "ss_basic_trojan_sni", "ss_basic_trojan_binary", "ss_basic_fingerprint", "ss_basic_v2ray_network_flow", "ss_basic_v2ray_network_security", "ss_basic_v2ray_mux_concurrency", "ss_basic_xray_publicKey", "ss_basic_xray_shortId", "ss_reboot_check", "ss_basic_week", "ss_basic_day", "ss_basic_inter_min", "ss_basic_inter_hour", "ss_basic_inter_day", "ss_basic_inter_pre", "ss_basic_time_hour", "ss_basic_time_min", "ss_basic_tri_reboot_time", "ss_basic_tri_reboot_policy", "ss_basic_dnsmasq_fastlookup", "ss_basic_server_resolver", "ss_basic_server_resolver_user"];
+	var params_check = ["ss_basic_enable", "ss_basic_gfwlist_update", "ss_basic_chnroute_update", "ss_basic_cdn_update", "ss_basic_v2ray_use_json", "ss_basic_v2ray_mux_enable", "ss_basic_allowinsecure", "ss_basic_fragment", "ss_basic_dns_hijack", "ss_basic_udp_sync", "ss_chinadnsng_noipv6", "ss_chinadnsng_chnfirst", "ss_chinadnsng_fair", "ss_chinadnsng_reuseport", "ss_chinadnsng_noip", "ss_chinadnsng_verbose", "ss_doh_via_proxy", "ss_doh_ecs"];
 	var params_base64_a = ["ss_dnsmasq", "ss_wan_white_ip", "ss_wan_white_domain", "ss_wan_black_ip", "ss_wan_black_domain", "ss_online_links"];
 	var params_base64_b = ["ss_basic_password", "ss_basic_custom"];
 	// collect data from input
@@ -1052,6 +1052,22 @@ function verifyFields(r) {
 	refresh_acl_table();
 }
 
+var DOH_PRESETS = {
+	cloudflare: "https://cloudflare-dns.com/dns-query?ct=application/dns-json&",
+	google: "https://dns.google/resolve?",
+	quad9: "https://dns.quad9.net:5053/dns-query?ct=application/dns-json&",
+	adguard: "https://dns.adguard-dns.com/resolve?"
+};
+function updateDohPreset(){
+	var p = E("ss_doh_preset").value;
+	if (DOH_PRESETS[p]) {
+		E("ss_doh_primary").value = DOH_PRESETS[p];
+	} else if (p == "custom") {
+		E("ss_doh_primary").value = "";
+		E("ss_doh_primary").focus();
+	}
+}
+
 function update_visibility() {
 	var a = E("ss_basic_rule_update").value == "1";
 	var b = E("ss_basic_node_update").value == "1";
@@ -1073,12 +1089,13 @@ function update_visibility() {
 	showhide("ss_dns2socks_user", (f == "3"));
 	showhide("ss_chinadnsng_user", (f == "10"));
 	showhide("dns_plan_chinadnsng", (f == "10"));
+	showhide("dns_plan_doh", (f == "6"));
 	showhide("ss_chinadns1_user", (f == "5"));
 	showhide("ss_direct_user", (f == "8"));
 	showhide("ss_basic_tri_reboot_time_note", (g != "0"));
 	showhide("ss_basic_tri_reboot_policy", (g != "0"));
 	if(f == "6"){
-		$("#ss_foreign_dns_note").html('DNS over HTTPS (DoH)，<a href="https://cloudflare-dns.com/zh-Hans/" target="_blank"><em>cloudflare服务</em></a>，拒绝一切污染~');
+		$("#ss_foreign_dns_note").html('');
 	}else if(f == "7"){
 		$("#ss_foreign_dns_note").html('v2ray_dns只有启用v2ray节点的时能使用');
 	}else if(f == "10"){
@@ -4766,24 +4783,39 @@ function set_cron(action) {
 													</th>
 													<td>
 														<select id="ss_foreign_dns" name="ss_foreign_dns" class="input_option" onclick="update_visibility();" >
-															<option value="3" selected="">dns2socks</option>
+															<option value="3" selected="">dns2socks (UDP)</option>
 															
 															<option value="1">cdns</option>
 															<option value="5">chinadns1</option>
 															<option value="2">chinadns2</option>
-															<option value="6">https_dns_proxy</option>
+															<option value="6">DoH (https_dns_proxy)</option>
 															<option value="7">v2ray_dns</option>
 															<option value="8">直连</option>
-															<option value="10">ChinaDNS-NG【推荐】</option>
+															<option value="10">ChinaDNS-NG (UDP)【推荐】</option>
 														</select>
-														<input type="text" class="input_ss_table" id="ss_dns2socks_user" name="ss_dns2socks_user" style="width:160px" placeholder="dns2socks 上游如：8.8.8.8:53" value="8.8.8.8:53">
-														<input type="text" class="input_ss_table" id="ss_chinadns1_user" name="ss_chinadns1_user" style="width:160px" placeholder="chinadns1 上游如：8.8.8.8:53" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_dns2socks_user" name="ss_dns2socks_user" style="width:160px" placeholder="8.8.8.8:53 多个用逗号分隔" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_chinadns1_user" name="ss_chinadns1_user" style="width:160px" placeholder="8.8.8.8:53 多个逗号分隔" value="8.8.8.8:53">
 														<input type="text" class="input_ss_table" id="ss_chinadns_user" name="ss_chinadns_user" style="width:160px" placeholder="需端口号如：8.8.8.8:53" value="8.8.8.8:53">
-														<input type="text" class="input_ss_table" id="ss_chinadnsng_user" name="ss_chinadnsng_user" style="width:160px" placeholder="ChinaDNS-NG 国外上游如：8.8.8.8:53" value="8.8.8.8:53">
-														<input type="text" class="input_ss_table" id="ss_direct_user" name="ss_direct_user" style="width:160px" placeholder="需端口号如：8.8.8.8#53" value="8.8.8.8#53">
+														<input type="text" class="input_ss_table" id="ss_chinadnsng_user" name="ss_chinadnsng_user" style="width:160px" placeholder="8.8.8.8:53 多个逗号分隔" value="8.8.8.8:53">
+														<input type="text" class="input_ss_table" id="ss_direct_user" name="ss_direct_user" style="width:160px" placeholder="8.8.8.8#53 多个逗号分隔" value="8.8.8.8#53">
 														<span id="ss_foreign_dns_note"></span>
 													</td>
 												</tr>
+											<tr id="dns_plan_doh" style="display: none;">
+												<th width="20%">DoH 服务器</th>
+												<td>
+													<select id="ss_doh_preset" name="ss_doh_preset" class="input_option" style="width:180px" onchange="updateDohPreset();">
+														<option value="cloudflare">Cloudflare</option>
+														<option value="google">Google</option>
+														<option value="quad9">Quad9</option>
+														<option value="adguard">AdGuard</option>
+														<option value="custom">自定义</option>
+													</select>
+													<br/>主 <input type="text" class="input_ss_table" id="ss_doh_primary" name="ss_doh_primary" style="width:420px" placeholder="https://... DoH 地址，选预设自动填充" >
+													<br/><label><input type="checkbox" id="ss_doh_via_proxy" name="ss_doh_via_proxy" checked/> 经代理(推荐)</label>&nbsp;
+													<label><input type="checkbox" id="ss_doh_ecs" name="ss_doh_ecs"/> 发送ECS</label>
+												</td>
+											</tr>
 											<tr id="dns_plan_chinadnsng" style="display: none;">
 												<th width="20%">ChinaDNS-NG 参数</th>
 												<td>

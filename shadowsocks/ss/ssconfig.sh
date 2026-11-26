@@ -371,7 +371,7 @@ start_dns(){
 		chinadns -p $DNSF_PORT -s $ss_chinadns_user -e $clinet_ip,$ss_real_server_ip -c /koolshare/ss/rules/chnroute.txt >/dev/null 2>&1 &
 	fi
 	
-	# Start DNS2SOCKS (default)
+	# Start DNS2SOCKS (default) - 原生单上游
 	if [ "$ss_foreign_dns" == "3" ] || [ -z "$ss_foreign_dns" ];then
 		[ -z "$ss_foreign_dns" ] && dbus set ss_foreign_dns="3"
 		echo_date 开启dns2socks，用于dns解析...
@@ -431,24 +431,35 @@ start_dns(){
 		chinadns-ng ${NG_OPTS} -l ${DNSF_PORT} -c ${CDN}#${DNSC_PORT} -t 127.0.0.1#1055 -g /tmp/gfwlist.txt -m /koolshare/ss/rules/cdn.txt >/dev/null 2>&1 &
 	fi
 
-	#start https_dns_proxy
+	#start DoH (https_dns_proxy) - 支持主/备双服务器 + 可走代理
 	if [ "$ss_foreign_dns" == "6" ];then
-		echo_date 开启https_dns_proxy，用于dns解析...
+		echo_date "开启DoH(https_dns_proxy)，用于dns解析..."
+		# EDNS Client Subnet 标签
 		if [ -n "$ss_basic_server_ip" ];then
-			# 用chnroute去判断SS服务器在国内还是在国外
 			ipset test chnroute $ss_basic_server_ip > /dev/null 2>&1
-			if [ "$?" != "0" ];then
-				# ss服务器是国外IP
-				ss_real_server_ip="$ss_basic_server_ip"
-			else
-				# ss服务器是国内ip （可能用了国内中转，那么用谷歌dns ip地址去作为国外edns标签）
-				ss_real_server_ip="8.8.8.8"
-			fi
+			if [ "$?" != "0" ];then ss_real_server_ip="$ss_basic_server_ip"; else ss_real_server_ip="8.8.8.8"; fi
 		else
-			# ss服务器可能是域名且没有正确解析
 			ss_real_server_ip="8.8.8.8"
 		fi
-		https_dns_proxy -u nobody -p 7913 -b 8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1,145.100.185.15,145.100.185.16,185.49.141.37 -e $ss_real_server_ip/16 -r "https://cloudflare-dns.com/dns-query?ct=application/dns-json&" -d
+		# DoH URL：优先用输入的，否则按预设回退
+		DOH_PRIMARY="${ss_doh_primary}"
+		if [ -z "$DOH_PRIMARY" ];then
+			case "${ss_doh_preset}" in
+				google)   DOH_PRIMARY="https://dns.google/resolve?";;
+				quad9)    DOH_PRIMARY="https://dns.quad9.net:5053/dns-query?ct=application/dns-json&";;
+				adguard)  DOH_PRIMARY="https://dns.adguard-dns.com/resolve?";;
+				*)        DOH_PRIMARY="https://cloudflare-dns.com/dns-query?ct=application/dns-json&";;
+			esac
+		fi
+		# 是否走 socks 代理
+		DOH_PROXY_OPT=""
+		[ "$ss_doh_via_proxy" != "0" ] && DOH_PROXY_OPT="-t socks5h://127.0.0.1:23456"
+		# ECS 选项
+		DOH_ECS_OPT=""
+		[ "$ss_doh_ecs" == "1" ] && DOH_ECS_OPT="-e $ss_real_server_ip/16"
+		DOH_BOOT="-b 8.8.8.8,1.1.1.1,8.8.4.4,1.0.0.1"
+		echo_date "DoH 服务器：${DOH_PRIMARY}"
+		https_dns_proxy -u nobody -p 7913 $DOH_BOOT $DOH_ECS_OPT -r "$DOH_PRIMARY" $DOH_PROXY_OPT -d >/dev/null 2>&1
 	fi
 	
 	# start v2ray DNSF_PORT
@@ -1988,6 +1999,11 @@ lan_acess_control(){
 		for acl in $acl_nu
 		do
 			ipaddr=`dbus get ss_acl_ip_$acl`
+			# 跳过残缺规则：IP 为空会让 -s 被省略，规则会误作用到所有主机
+			if [ -z "$ipaddr" ];then
+				echo_date "ACL规则[$acl]缺少IP，已跳过"
+				continue
+			fi
 			ipaddr_hex=`dbus get ss_acl_ip_$acl | awk -F "." '{printf ("0x%02x", $1)} {printf ("%02x", $2)} {printf ("%02x", $3)} {printf ("%02x\n", $4)}'`
 			ports=`dbus get ss_acl_port_$acl`
 			proxy_mode=`dbus get ss_acl_mode_$acl`
@@ -2012,7 +2028,13 @@ lan_acess_control(){
 
 		if [ "$ss_acl_default_port" == "all" ];then
 			ss_acl_default_port=""
-			[ -z "$ss_acl_default_mode" ] && dbus set ss_acl_default_mode="$ss_basic_mode" && ss_acl_default_mode="$ss_basic_mode"
+		fi
+		# 默认模式为空时回退到主模式，避免生成空 -j 目标链
+		if [ -z "$ss_acl_default_mode" ] || [ -z "$(get_action_chain $ss_acl_default_mode)" ];then
+			ss_acl_default_mode="$ss_basic_mode"
+			dbus set ss_acl_default_mode="$ss_basic_mode"
+		fi
+		if [ -z "$ss_acl_default_port" ];then
 			echo_date 加载ACL规则：【剩余主机】【全部端口】模式为：$(get_mode_name $ss_acl_default_mode)
 		else
 			echo_date 加载ACL规则：【剩余主机】【$ss_acl_default_port】模式为：$(get_mode_name $ss_acl_default_mode)
@@ -2098,14 +2120,19 @@ apply_nat_rules(){
 	iptables -t nat -A OUTPUT -p tcp -m mark --mark "$ip_prefix_hex" -j SHADOWSOCKS_EXT
 	
 	# 把最后剩余流量重定向到相应模式的nat表中对应的主模式的链
-	iptables -t nat -A SHADOWSOCKS -p tcp $(factor $ss_acl_default_port "-m multiport --dport") -j $(get_action_chain $ss_acl_default_mode)
-	iptables -t nat -A SHADOWSOCKS_EXT -p tcp $(factor $ss_acl_default_port "-m multiport --dport") -j $(get_action_chain $ss_acl_default_mode)
+	ACL_DEFAULT_CHAIN=$(get_action_chain $ss_acl_default_mode)
+	if [ -n "$ACL_DEFAULT_CHAIN" ];then
+		iptables -t nat -A SHADOWSOCKS -p tcp $(factor $ss_acl_default_port "-m multiport --dport") -j $ACL_DEFAULT_CHAIN
+		iptables -t nat -A SHADOWSOCKS_EXT -p tcp $(factor $ss_acl_default_port "-m multiport --dport") -j $ACL_DEFAULT_CHAIN
+	else
+		echo_date "警告：ACL默认模式无效（$ss_acl_default_mode），跳过默认跳转规则"
+	fi
 	
 	# 如果是主模式游戏模式，则把SHADOWSOCKS链中剩余udp流量转发给SHADOWSOCKS_GAM链
 	# 如果主模式不是游戏模式，则不需要把SHADOWSOCKS链中剩余udp流量转发给SHADOWSOCKS_GAM，不然会造成其他模式主机的udp也走游戏模式
 	###[ "$mangle" == "1" ] && ss_acl_default_mode=3
 	[ "$ss_acl_default_mode" != "0" ] && [ "$ss_acl_default_mode" != "3" ] && [ "$ss_basic_udp_sync" != "1" ]  && ss_acl_default_mode=0
-	[ "$ss_basic_mode" == "3" ] || [ "$ss_basic_udp_sync" == "1" ]  && iptables -t mangle -A SHADOWSOCKS -p udp -j $(get_action_chain $ss_acl_default_mode)
+	[ "$ss_basic_mode" == "3" ] || [ "$ss_basic_udp_sync" == "1" ]  && [ -n "$(get_action_chain $ss_acl_default_mode)" ] && iptables -t mangle -A SHADOWSOCKS -p udp -j $(get_action_chain $ss_acl_default_mode)
 	# 重定所有流量到 SHADOWSOCKS
 	KP_NU=`iptables -nvL PREROUTING -t nat |sed 1,2d | sed -n '/KOOLPROXY/='|head -n1`
 	[ "$KP_NU" == "" ] && KP_NU=0
