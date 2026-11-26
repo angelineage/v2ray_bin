@@ -43,6 +43,20 @@ var _xrayStub = {className:"", style:{display:"none"}, value:"", checked:false, 
 var _E_orig = function(id){return document.getElementById(id);};
 function E(id){ var el = _E_orig(id); return el ? el : _xrayStub; }
 
+// Xray-only build: tolerate showhide() calls targeting removed controls.
+// general.js showhide() does document.getElementById(el).style.display and throws
+// on null, which aborts init() and leaves every button unbound. Wrap it so
+// missing elements are silently skipped.
+// NOTE: use function EXPRESSION assignment, not a declaration - a declaration
+// would hoist and overwrite general.js's showhide before we can save it (recursion).
+var _showhide_orig = (typeof showhide === "function") ? showhide : null;
+showhide = function(element, sh){
+	var el = document.getElementById(element);
+	if (!el) return;
+	if (_showhide_orig) { _showhide_orig(element, sh); return; }
+	el.style.display = (sh == 1 || sh === true) ? "" : "none";
+};
+
 function init() {
 	show_menu(menu_hook);
 	update_ss_ui(db_ss);
